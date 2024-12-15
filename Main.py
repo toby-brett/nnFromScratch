@@ -8,8 +8,7 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))  # squishes numbers from -infinity to +infinity between 0 and 1
 
 def sigmoidDerivative(x):
-    sig = sigmoid(x)
-    return sig * (1 - sig) # the gradient function of sigmoid
+    return x * (1 - x) # the gradient function of sigmoid
 
 def relu(x):
     return np.maximum(0, x)
@@ -63,7 +62,7 @@ class model():
         # derivative of loss with respect to W3 and B3   
 
         self.dLdA3 = np.array([preds[0] - target[0], preds[1] - target[1]]) 
-        self.dA3dZ3 = sigmoidDerivative(self.logits3) # output being logits (z), pre sigmoid (always positive)
+        self.dA3dZ3 = sigmoidDerivative(self.activation3) # since the sigmoid derivative funnction is in terms of sigmoid z itself, and sigmoid z is already defined as A we can just take in the parameter A so that we are not running unnecessary sigmoid calculations, which are resource intensive
         self.dZ3dW3 = self.activation2.transpose() # z = W * a + b, so dZ/dW = a.t
         self.dZ3dB3 = np.ones(shape=(self.m, 1))
 
@@ -76,7 +75,7 @@ class model():
 
         # derivative of loss with respect to W2 and B2
         self.dZ3dA2 = self.weightLayer3.transpose()
-        self.dA2dZ2 = sigmoidDerivative(self.logits2) 
+        self.dA2dZ2 = sigmoidDerivative(self.activation2) 
         self.dZ2dW2 = self.activation1.transpose()
         self.dZ2dB2 = np.ones(shape=(self.m, 1))
 
@@ -88,7 +87,7 @@ class model():
         ### layer 1 ###
 
         self.dZ2dA1 = self.weightLayer2.transpose() # matrix 32x32
-        self.dA1dZ1 = sigmoidDerivative(self.logits1)
+        self.dA1dZ1 = sigmoidDerivative(self.activation1)
         self.dZ1dW1 = self.inputs.transpose()
         self.dZ1dB1 = np.ones(shape=(self.m, 1)) # 1x1 mat
 
@@ -106,4 +105,6 @@ class model():
             parameter -= self.learnrate * derivative
 
        
+
+
 
