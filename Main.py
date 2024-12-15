@@ -1,5 +1,8 @@
 import numpy as np 
 from Data import *
+import time
+
+
 
 def sigmoid(x): 
     return 1 / (1 + np.exp(-x))  # squishes numbers from -infinity to +infinity between 0 and 1
@@ -64,8 +67,10 @@ class model():
         self.dZ3dW3 = self.activation2.transpose() # z = W * a + b, so dZ/dW = a.t
         self.dZ3dB3 = np.ones(shape=(self.m, 1))
 
-        self.dLdW3 = (self.m**-1) * ((self.dLdA3 * self.dA3dZ3) @ self.dZ3dW3)
-        self.dLdB3 = (self.m**-1) * ((self.dLdA3 * self.dA3dZ3) @ self.dZ3dB3)
+        self.dLdZ3 = (self.dLdA3 * self.dA3dZ3)
+
+        self.dLdW3 = (self.m**-1) * (self.dLdZ3 @ self.dZ3dW3)
+        self.dLdB3 = (self.m**-1) * (self.dLdZ3 @ self.dZ3dB3)
 
         ### layer 2 ###
 
@@ -75,8 +80,10 @@ class model():
         self.dZ2dW2 = self.activation1.transpose()
         self.dZ2dB2 = np.ones(shape=(self.m, 1))
 
-        self.dLdW2 = (self.m**-1) * ((self.dZ3dA2 @ (self.dLdA3 * self.dA3dZ3) * self.dA2dZ2) @ self.dZ2dW2)
-        self.dLdB2 = (self.m**-1) * ((self.dZ3dA2 @ (self.dLdA3 * self.dA3dZ3) * self.dA2dZ2) @ self.dZ2dB2)
+        self.dLdZ2 = (self.dZ3dA2 @ self.dLdZ3) * self.dA2dZ2
+
+        self.dLdW2 = (self.m**-1) * (self.dLdZ2 @ self.dZ2dW2)
+        self.dLdB2 = (self.m**-1) * (self.dLdZ2 @ self.dZ2dB2)
 
         ### layer 1 ###
 
@@ -86,9 +93,11 @@ class model():
         self.dZ1dB1 = np.ones(shape=(self.m, 1)) # 1x1 mat
 
         # derivative of loss with respect to W1 and B1
+
+        self.dLdZ1 = (self.dZ2dA1 @ self.dLdZ2) * self.dA1dZ1
                         
-        self.dLdW1 = (self.m**-1) * ((self.dZ2dA1 @ (self.dZ3dA2 @ (self.dLdA3 * self.dA3dZ3) * self.dA2dZ2) * self.dA1dZ1) @ self.dZ1dW1)
-        self.dLdB1 = (self.m**-1) * ((self.dZ2dA1 @ (self.dZ3dA2 @ (self.dLdA3 * self.dA3dZ3) * self.dA2dZ2) * self.dA1dZ1) @ self.dZ1dB1)
+        self.dLdW1 = (self.m**-1) * (self.dLdZ1 @ self.dZ1dW1)
+        self.dLdB1 = (self.m**-1) * (self.dLdZ1 @ self.dZ1dB1)
 
         self.step((self.dLdW3, self.dLdB3, self.dLdW2, self.dLdB2, self.dLdW1, self.dLdB1), (self.weightLayer3, self.biasLayer3, self.weightLayer2, self.biasLayer2, self.weightLayer1, self.biasLayer1))
 
@@ -98,79 +107,3 @@ class model():
 
        
 
-train_data = train_batches
-
-nn = model()
-losses = []
-
-def train(epochs):
-    global losses
-    for epoch in range(epochs):
-        for batch in train_data:
-            preds = nn.forwardProp(batch[0]) 
-            target_list = [[],[]]
-            for target_output in batch[1]:
-                
-                if target_output == 1:
-                    target_list[0].append(1)
-                    target_list[1].append(0)
-
-                elif target_output == 0:
-                    target_list[0].append(0)
-                    target_list[1].append(1)
-                    
-            target = np.array(target_list)
-
-            nn.backProp(preds, target)
-            
-            total_loss = 0
-            total_loss += np.sum(0.5 * (preds[0] - target[0]) ** 2)
-        
-        total_loss /= len(train_data)
-        losses.append(total_loss)
-
-def get_parameters():
-
-    saved_weights1 = nn.weightLayer1
-    saved_weights2 = nn.weightLayer2
-    saved_weights3 = nn.weightLayer3
-    saved_bias1 = nn.biasLayer1.transpose()[0]
-    saved_bias2 = nn.biasLayer2.transpose()[0]
-    saved_bias3 = nn.biasLayer3.transpose()[0]
-    
-    return(saved_weights1, saved_weights2, saved_weights3,saved_bias1, saved_bias2, saved_bias3)
-
-        
-import matplotlib.pyplot as plt
-
-train(10000)
-params = get_parameters()
-test_nn = model(params)
-
-plt.plot(losses)
-
-# Add title and labels
-plt.title("Graph of losses")
-plt.xlabel("time")
-plt.ylabel("loss")
-
-# Display the plot
-plt.show()
-
-def test():
-    win = 0
-    for i in range(100):
-        #print('X_TEST', X_test[i])
-        preds = test_nn.forwardProp(X_test[i])
-        target = y_test[i]
-        if preds[0] > preds[1]:
-            pred = 1
-        else:
-            pred = 0
-
-        if pred == target:
-            win += 1
-
-    print(f'percent correct {win/100}')
-
-test()
