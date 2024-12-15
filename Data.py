@@ -4,7 +4,7 @@ import numpy as np
 
 # Load the dataset
 data = load_breast_cancer()
-X = data.data  # Features
+X = data.data  # Features features
 y = data.target  # Labels
 
 # Split into train and test sets
