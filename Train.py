@@ -1,4 +1,5 @@
 from Main import *
+import tqdm
 
 train_data = train_batches
 
@@ -7,7 +8,7 @@ losses = []
 
 def train(epochs):
     global losses
-    for epoch in range(epochs):
+    for epoch in tqdm.tqdm(range(epochs)):
         for batch in train_data:
             preds = nn.forwardProp(batch[0]) 
             target_list = [[],[]]
